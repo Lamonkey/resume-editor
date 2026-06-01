@@ -159,6 +159,30 @@ export const importResumesFromLocal = async (callback?: () => void) => {
   uploadFile(merge, ".json");
 };
 
+/**
+ * Create a resume from raw Markdown, or overwrite an existing one with the same
+ * name. Used by the `?import=<path>` flow so re-running the resume generator
+ * updates the same entry instead of piling up duplicates. Returns the resume id.
+ */
+export const upsertResumeFromMarkdown = async (name: string, markdown: string) => {
+  const storage = (await getStorage()) || {};
+
+  const existingId = Object.keys(storage).find((id) => storage[id].name === name);
+  const id = existingId || new Date().getTime().toString();
+
+  storage[id] = {
+    name,
+    markdown,
+    css: storage[id]?.css ?? DEFAULT_CSS_CONTENT,
+    styles: storage[id]?.styles ?? DEFAULT_STYLES,
+    update: new Date().getTime().toString()
+  };
+
+  await localForage.setItem(MARKDOWN_RESUME_KEY, storage);
+
+  return id;
+};
+
 export const deleteResume = async (id: string) => {
   const toast = useToast();
   const storage = await getStorage();

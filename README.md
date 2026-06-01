@@ -49,6 +49,18 @@ Highly recommend using Chromium-based browsers, e.g., [Chrome][chrome] or [Micro
   - No user tracking, no ads
 - Dark mode
 
+## Import a resume from a local file (`?import=`)
+
+When running locally (`pnpm dev` or `pnpm build && pnpm serve`), you can load a Markdown file straight from disk into the editor — no copy-paste — by opening:
+
+```
+http://localhost:3000/markdown-resume/?import=/absolute/path/to/resume.md
+```
+
+The app reads the file via a local server route, creates a resume in browser storage, and opens it in the editor. The resume is named after its parent folder (or the company in a `*_resume_<company>.md` filename); add `&name=Some%20Name` to override. Re-importing with the same name overwrites that resume in place instead of creating a duplicate, so a generator can keep refreshing the same entry.
+
+This is a local-only convenience: the static production build (GitHub Pages) has no server routes, so `?import=` is a no-op there.
+
 ## Development
 
 Built with [Nuxt 3](https://nuxt.com), powered by [Vue 3](https://github.com/vuejs/vue-next), [Vite](https://github.com/vitejs/vite), [Zag](https://zagjs.com/), and [UnoCSS](https://github.com/antfu/unocss).

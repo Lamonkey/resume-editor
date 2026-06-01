@@ -7,9 +7,35 @@
 </template>
 
 <script setup lang="ts">
+import { joinURL } from "ufo";
+
 const { t, locale } = useI18n();
 const colorMode = useColorMode();
 const preferredDark = { value: false }; //usePreferredDark();
+
+// Import a resume passed via `?import=<absolute .md path>` (local dev only).
+// Lets the resume generator drop a freshly written Markdown file straight into
+// the editor — no copy-paste, auto-named from the file's folder. Optional
+// `&name=` overrides the derived name. See `~/server/api/import-resume.get.ts`.
+const route = useRoute();
+const router = useRouter();
+const localePath = useLocalePath();
+
+onMounted(async () => {
+  const path = route.query.import;
+  if (typeof path !== "string" || !path) return;
+
+  try {
+    const endpoint = joinURL(useRuntimeConfig().app.baseURL, "api/import-resume");
+    const { name, markdown } = await $fetch<{ name: string; markdown: string }>(endpoint, {
+      query: { path, name: route.query.name }
+    });
+    const id = await upsertResumeFromMarkdown(name, markdown);
+    await router.replace(localePath(`/edit/${id}`));
+  } catch (e) {
+    console.error("[import-resume] failed to import", route.query.import, e);
+  }
+});
 
 useHead({
   title: t("head.title"),
