@@ -33,7 +33,14 @@ const styleOverrideFromQuery = () => {
     return typeof v === "string" && v !== "" && Number.isFinite(n) ? n : undefined;
   };
 
-  const numKeys = ["fontSize", "lineHeight", "marginV", "marginH", "paragraphSpace"] as const;
+  const numKeys = [
+    "fontSize",
+    "lineHeight",
+    "marginV",
+    "marginH",
+    "marginBottom",
+    "paragraphSpace"
+  ] as const;
   for (const key of numKeys) {
     const n = num(q[key]);
     if (n !== undefined) override[key] = n;

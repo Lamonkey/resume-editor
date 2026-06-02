@@ -58,8 +58,20 @@
     display: none !important;
   }
 
+  /* Print everything white so short final pages don't show the gray preview
+     chrome (background, rounded corners, frame) below the resume content. */
+  html,
+  body,
+  .edit-page,
+  .workspace,
+  [data-scope="splitter"],
+  .pane-container {
+    background: white !important;
+  }
+
   .pane-container {
     border: none;
+    border-radius: 0 !important;
   }
 
   .vue-zoom {

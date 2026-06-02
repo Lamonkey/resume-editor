@@ -3,6 +3,10 @@ export type PaperType = keyof typeof PAPER;
 export type ResumeStyles = {
   marginV: number;
   marginH: number;
+  /** Optional independent bottom margin. When set, overrides the bottom value
+   *  otherwise derived from marginV (which controls the top). Lets a resume
+   *  have e.g. a 0 top margin but a non-zero bottom margin. */
+  marginBottom?: number;
   lineHeight: number;
   paragraphSpace: number;
   themeColor: string;

@@ -40,7 +40,19 @@ const CHROME =
 
 // ---- arg parsing -----------------------------------------------------------
 const argv = process.argv.slice(2);
-const opts = { paper: "A4", baseUrl: "http://localhost:3000/markdown-resume/" };
+// Preferred resume defaults (fonts 华康宋体 / Verdana come from the app's own
+// DEFAULT_STYLES, so they don't need to be passed here). The fit loop overrides
+// fontSize / lineHeight to grow or shrink the resume to exactly one page.
+const opts = {
+  paper: "A4",
+  fontSize: "13",
+  lineHeight: "1.25",
+  marginV: "0",
+  marginBottom: "20",
+  marginH: "16",
+  paragraphSpace: "5",
+  baseUrl: "http://localhost:3000/markdown-resume/"
+};
 let mdPath;
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
@@ -50,6 +62,7 @@ for (let i = 0; i < argv.length; i++) {
     case "--font-size": opts.fontSize = next(); break;
     case "--line-height": opts.lineHeight = next(); break;
     case "--margin-v": opts.marginV = next(); break;
+    case "--margin-bottom": opts.marginBottom = next(); break;
     case "--margin-h": opts.marginH = next(); break;
     case "--para-space": opts.paragraphSpace = next(); break;
     case "--paper": opts.paper = next(); break;
@@ -77,7 +90,7 @@ const log = (...a) => { if (!opts.json) console.error(...a); };
 const importUrl = (() => {
   const u = new URL(opts.baseUrl);
   u.searchParams.set("import", mdPath);
-  for (const k of ["name", "fontSize", "lineHeight", "marginV", "marginH", "paragraphSpace", "paper"])
+  for (const k of ["name", "fontSize", "lineHeight", "marginV", "marginBottom", "marginH", "paragraphSpace", "paper"])
     if (opts[k] !== undefined) u.searchParams.set(k, String(opts[k]));
   return u.toString();
 })();
