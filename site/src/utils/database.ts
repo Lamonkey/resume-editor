@@ -164,17 +164,23 @@ export const importResumesFromLocal = async (callback?: () => void) => {
  * name. Used by the `?import=<path>` flow so re-running the resume generator
  * updates the same entry instead of piling up duplicates. Returns the resume id.
  */
-export const upsertResumeFromMarkdown = async (name: string, markdown: string) => {
+export const upsertResumeFromMarkdown = async (
+  name: string,
+  markdown: string,
+  stylesOverride?: Partial<ResumeStyles>
+) => {
   const storage = (await getStorage()) || {};
 
   const existingId = Object.keys(storage).find((id) => storage[id].name === name);
   const id = existingId || new Date().getTime().toString();
 
+  const baseStyles = storage[id]?.styles ?? DEFAULT_STYLES;
+
   storage[id] = {
     name,
     markdown,
     css: storage[id]?.css ?? DEFAULT_CSS_CONTENT,
-    styles: storage[id]?.styles ?? DEFAULT_STYLES,
+    styles: { ...baseStyles, ...stylesOverride },
     update: new Date().getTime().toString()
   };
 

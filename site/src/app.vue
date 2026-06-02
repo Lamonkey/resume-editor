@@ -8,6 +8,7 @@
 
 <script setup lang="ts">
 import { joinURL } from "ufo";
+import type { ResumeStyles } from "~/types";
 
 const { t, locale } = useI18n();
 const colorMode = useColorMode();
@@ -16,10 +17,31 @@ const preferredDark = { value: false }; //usePreferredDark();
 // Import a resume passed via `?import=<absolute .md path>` (local dev only).
 // Lets the resume generator drop a freshly written Markdown file straight into
 // the editor — no copy-paste, auto-named from the file's folder. Optional
-// `&name=` overrides the derived name. See `~/server/api/import-resume.get.ts`.
+// `&name=` overrides the derived name. Style params can also be set from the
+// URL (`&fontSize=11&lineHeight=1.25&marginV=40&marginH=40&paragraphSpace=4&paper=letter`),
+// which is how the headless render tool drives one-page fitting.
+// See `~/server/api/import-resume.get.ts`.
 const route = useRoute();
 const router = useRouter();
 const localePath = useLocalePath();
+
+const styleOverrideFromQuery = () => {
+  const q = route.query;
+  const override: Partial<ResumeStyles> = {};
+  const num = (v: unknown) => {
+    const n = Number(v);
+    return typeof v === "string" && v !== "" && Number.isFinite(n) ? n : undefined;
+  };
+
+  const numKeys = ["fontSize", "lineHeight", "marginV", "marginH", "paragraphSpace"] as const;
+  for (const key of numKeys) {
+    const n = num(q[key]);
+    if (n !== undefined) override[key] = n;
+  }
+  if (q.paper === "A4" || q.paper === "letter") override.paper = q.paper;
+
+  return override;
+};
 
 onMounted(async () => {
   const path = route.query.import;
@@ -30,7 +52,7 @@ onMounted(async () => {
     const { name, markdown } = await $fetch<{ name: string; markdown: string }>(endpoint, {
       query: { path, name: route.query.name }
     });
-    const id = await upsertResumeFromMarkdown(name, markdown);
+    const id = await upsertResumeFromMarkdown(name, markdown, styleOverrideFromQuery());
     await router.replace(localePath(`/edit/${id}`));
   } catch (e) {
     console.error("[import-resume] failed to import", route.query.import, e);

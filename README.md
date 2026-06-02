@@ -61,6 +61,19 @@ The app reads the file via a local server route, creates a resume in browser sto
 
 This is a local-only convenience: the static production build (GitHub Pages) has no server routes, so `?import=` is a no-op there.
 
+## Headless render / one-page fitting (`pnpm render`)
+
+`scripts/render-resume.mjs` renders a Markdown resume in headless Chrome (using your installed Google Chrome via `puppeteer-core` — no browser download) and reports how many pages it occupies. It can also write a screenshot and a print-accurate PDF. This is what lets an agent fit a resume to one page by adjusting style knobs (and/or trimming content) in a loop.
+
+```bash
+pnpm render <resume.md> \
+  --font-size 10 --line-height 1.15 \
+  --margin-v 32 --margin-h 36 --para-space 3 --paper letter \
+  --png /tmp/out.png --pdf /tmp/out.pdf
+```
+
+Prints JSON: `{ "pages": 1, "fits": true, "png": …, "pdf": …, "styles": { … } }`. It auto-starts the dev server if it isn't already running. Set `CHROME_PATH` to override the Chrome binary.
+
 ## Development
 
 Built with [Nuxt 3](https://nuxt.com), powered by [Vue 3](https://github.com/vuejs/vue-next), [Vite](https://github.com/vitejs/vite), [Zag](https://zagjs.com/), and [UnoCSS](https://github.com/antfu/unocss).
