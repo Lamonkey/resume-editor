@@ -72,7 +72,9 @@ pnpm render <resume.md> \
   --png /tmp/out.png --pdf /tmp/out.pdf
 ```
 
-Prints JSON: `{ "pages": 1, "fits": true, "png": …, "pdf": …, "styles": { … } }`. It auto-starts the dev server if it isn't already running. Set `CHROME_PATH` to override the Chrome binary.
+Prints JSON: `{ "pages": 1, "fits": true, "png": …, "pdf": …, "label": …, "styles": { … } }`. It auto-starts the dev server if it isn't already running. Set `CHROME_PATH` to override the Chrome binary.
+
+The exported PDF is given a macOS Finder tag (default name `Resume PDF`, default color orange) so generated resumes are easy to find and group in Finder — `--label <color>` (or `none`) and `--label-name <str>` to change it. Note: macOS controls tag colors centrally per tag name, so the requested color only sticks if that tag name isn't already registered with a different color; to force a color, set it once for the tag in **Finder → Settings → Tags**.
 
 ## Development
 

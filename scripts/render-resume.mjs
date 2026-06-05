@@ -23,12 +23,19 @@
  *   --paper <A4|letter>     default A4
  *   --png <path>            write a screenshot here
  *   --pdf <path>            write a PDF here
+ *   --label <color>         Finder tag color on the PDF (default orange; none to skip)
+ *   --label-name <str>      Finder tag name (default "Resume PDF")
  *   --base-url <url>        default http://localhost:3000/markdown-resume/
  *   --json                  print machine-readable JSON only
  *
- * Output (stdout): a JSON object { pages, fits, png, pdf, styles }.
+ * Output (stdout): a JSON object { pages, fits, png, pdf, label, styles }.
+ *
+ * Note on tag color: macOS controls tag colors centrally per tag NAME in the
+ * Finder tag database, so the color we write only applies if that name isn't
+ * already registered with another color. To force a color, set it once for the
+ * tag in Finder → Settings → Tags; all files with that tag then inherit it.
  */
-import { spawn } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import { dirname, resolve, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 import puppeteer from "puppeteer-core";
@@ -51,6 +58,11 @@ const opts = {
   marginBottom: "20",
   marginH: "16",
   paragraphSpace: "5",
+  // Finder color tag applied to the exported PDF so it's easy to spot in
+  // Finder (color one of: none, gray, green, purple, blue, yellow, red, orange).
+  // labelName is the tag's name (kept custom to avoid color-name reconciliation).
+  label: "orange",
+  labelName: "Resume PDF",
   baseUrl: "http://localhost:3000/markdown-resume/"
 };
 let mdPath;
@@ -68,6 +80,8 @@ for (let i = 0; i < argv.length; i++) {
     case "--paper": opts.paper = next(); break;
     case "--png": opts.png = next(); break;
     case "--pdf": opts.pdf = next(); break;
+    case "--label": opts.label = next(); break;
+    case "--label-name": opts.labelName = next(); break;
     case "--base-url": opts.baseUrl = next(); break;
     case "--json": opts.json = true; break;
     default:
@@ -115,6 +129,28 @@ const ensureServer = async () => {
   throw new Error("dev server did not become reachable in 60s");
 };
 
+// ---- Finder color tag (macOS) ----------------------------------------------
+// Tags the PDF with a colored Finder tag so it stands out and is filterable in
+// Finder's sidebar. We use a custom tag NAME (default "Resume") rather than a
+// standard color name like "Orange": macOS reconciles standard color names to
+// whatever color they map to in the user's tag database (here "Orange" is
+// remapped to gray), but a novel name keeps the color slot we ask for.
+// Color slots are fixed: 1 gray, 2 green, 3 purple, 4 blue, 5 yellow, 6 red,
+// 7 orange.
+const FINDER_COLOR_CODES = {
+  none: 0, gray: 1, grey: 1, green: 2, purple: 3, blue: 4, yellow: 5, red: 6, orange: 7
+};
+const setFinderTag = (file, name, color) => {
+  const code = FINDER_COLOR_CODES[String(color || "").toLowerCase()];
+  if (!code) return; // none / unknown → leave untagged
+  // Drop any legacy numeric label so it can't compete with our tag's color.
+  try { execFileSync("xattr", ["-d", "com.apple.FinderInfo", file]); } catch {}
+  const tag = `${name}\n${code}`; // e.g. "Resume\n7"
+  const py = "import plistlib,sys; sys.stdout.write(plistlib.dumps([sys.argv[1]], fmt=plistlib.FMT_BINARY).hex())";
+  const hex = execFileSync("python3", ["-c", py, tag]).toString().trim();
+  execFileSync("xattr", ["-wx", "com.apple.metadata:_kMDItemUserTags", hex, file]);
+};
+
 // ---- render ----------------------------------------------------------------
 const main = async () => {
   await ensureServer();
@@ -159,6 +195,14 @@ const main = async () => {
         margin: { top: 0, bottom: 0, left: 0, right: 0 }
       });
       log(`[render] pdf → ${opts.pdf}`);
+      if (opts.label && opts.label.toLowerCase() !== "none") {
+        try {
+          setFinderTag(opts.pdf, opts.labelName, opts.label);
+          log(`[render] finder tag → "${opts.labelName}" (${opts.label})`);
+        } catch (e) {
+          log(`[render] could not set finder tag: ${e.message}`);
+        }
+      }
     }
 
     const result = {
@@ -166,6 +210,9 @@ const main = async () => {
       fits: pages === 1,
       png: opts.png ?? null,
       pdf: opts.pdf ?? null,
+      label: opts.pdf && opts.label?.toLowerCase() !== "none"
+        ? { name: opts.labelName, color: opts.label }
+        : null,
       styles: {
         fontSize: opts.fontSize, lineHeight: opts.lineHeight,
         marginV: opts.marginV, marginH: opts.marginH,
