@@ -4,6 +4,7 @@ import { i18n } from "./configs/i18n";
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   srcDir: "src/",
+  serverDir: "src/server",
 
   modules: [
     "@vueuse/nuxt",

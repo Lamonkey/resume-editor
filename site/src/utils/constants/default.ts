@@ -3,9 +3,10 @@ import type { ResumeStyles } from "~/types";
 export const DEFAULT_NAME = "My Resume";
 
 export const DEFAULT_STYLES = {
-  marginV: 55,
-  marginH: 45,
-  lineHeight: 1.3,
+  marginV: 0,
+  marginH: 16,
+  marginBottom: 20,
+  lineHeight: 1.25,
   paragraphSpace: 5,
   themeColor: "#000000",
   fontCJK: {
@@ -15,7 +16,7 @@ export const DEFAULT_STYLES = {
   fontEN: {
     name: "Verdana"
   },
-  fontSize: 12,
+  fontSize: 13,
   paper: "A4"
 } as ResumeStyles;
 

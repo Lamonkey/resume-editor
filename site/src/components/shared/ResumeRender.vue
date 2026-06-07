@@ -6,11 +6,11 @@
     :height="getPaperPx(styles.paper, 'h')"
     :width="PAPER[styles.paper].w"
     :top="styles.marginV"
-    :bottom="Math.max(styles.marginV - 10, CHROME_PRINT_BOTTOM)"
+    :bottom="Math.max(styles.marginBottom ?? styles.marginV - 10, CHROME_PRINT_BOTTOM)"
     :left="styles.marginH"
     :right="styles.marginH"
     :before-break-page="() => onFontLoaded(styles)"
-    :watch="[styles.lineHeight, styles.paragraphSpace, styles.fontSize, css]"
+    :watch="[styles.lineHeight, styles.paragraphSpace, styles.fontSize, styles.marginBottom, css]"
     :watch-delay="[styles.fontCJK, styles.fontEN]"
   />
 </template>

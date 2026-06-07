@@ -13,6 +13,7 @@
     "release:pkg": "pnpm release:pkg:check && pnpm release:pkg:version && pnpm -r publish",
     "release:pkg:check": "pnpm lint && pnpm build:pkg",
     "release:pkg:version": "bumpp package.json packages/*/package.json --commit \"build: publish v%s\" --all --tag --push",
+    "render": "node scripts/render-resume.mjs",
     "serve": "pnpm --filter=site serve"
   },
   "prettier": "@renovamen/prettier-config",
@@ -23,6 +24,7 @@
     "eslint": "^9.0.0",
     "pnpm": "^8.15.6",
     "prettier": "^3.2.5",
+    "puppeteer-core": "^25.1.0",
     "taze": "^0.13.3",
     "tsup": "^8.0.2",
     "typescript": "^5.4.5"
