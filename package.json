@@ -14,6 +14,7 @@
     "release:pkg:check": "pnpm lint && pnpm build:pkg",
     "release:pkg:version": "bumpp package.json packages/*/package.json --commit \"build: publish v%s\" --all --tag --push",
     "render": "node scripts/render-resume.mjs",
+    "render:service": "node scripts/render-service.mjs",
     "serve": "pnpm --filter=site serve"
   },
   "prettier": "@renovamen/prettier-config",
