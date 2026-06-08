@@ -8,21 +8,25 @@
 
 ## About
 
-This repo is a fork of [Oh My CV!](https://ohmycv.app/), which is beautifully made — go check out their work.
+This repo is a fork of [junian/markdown-resume](https://github.com/junian/markdown-resume), which is itself a fork of [Oh My CV!](https://ohmycv.app/) ([Renovamen/oh-my-cv](https://github.com/Renovamen/oh-my-cv)). All credit for the editor, the live preview, and the ATS-friendly templates belongs to them — go check out their work.
 
-Changes I made from the original:
+Inherited from junian's fork (on top of the original Oh My CV):
 
 - The default template is now as close as possible to [CareerCup's][careercup] resume template.
 - The default color is all black.
 - Uses web-safe fonts for easier and safer ATS parsing.
 - Export as HTML and DOCX.
-- And many more...
 
-I'm passionate about helping anyone get a job, which is why I made this fork.
-Most of the modifications ensure your resume is readable by both ATS systems and humans, so you don’t have to worry about the design.
+### Why this fork: making it headless
 
-I can’t guarantee that using this will improve your job search success rate.
-But I hope it helps.
+Oh My CV and junian's fork are both interactive, browser-only apps — you write Markdown in the editor and visually nudge the style knobs until the resume fits on one page. That manual loop is exactly what I wanted to automate.
+
+This fork adds a **headless rendering pipeline** so a script (or an AI agent) can drive the whole thing without a human in front of the browser:
+
+- **`?import=` URL** — load a Markdown file straight from disk into the editor instead of copy-pasting (see below).
+- **`pnpm render`** — render a resume in headless Chrome, measure how many pages it occupies, and emit a print-accurate PDF (see below).
+
+Together these let a generator tweak font size, margins, and line height in a loop until the resume fits one page — turning the "fiddle with sliders until it fits" chore into something programmatic. Everything the original does in the browser still works; the headless bits are additive.
 
 ## Notice
 
@@ -107,6 +111,7 @@ pnpm build
 
 ## Credits
 
+- Direct upstream: [junian/markdown-resume](https://github.com/junian/markdown-resume)
 - Original project: [Renovamen/oh-my-cv](https://github.com/Renovamen/oh-my-cv)
 - [billryan/resume](https://github.com/billryan/resume)
 
@@ -116,7 +121,7 @@ This project is licensed under the [MIT](LICENSE) license.
 
 ---
 
-Made with ☕ by [Junian.dev](https://www.junian.dev).
+Forked by [Lamonkey](https://github.com/Lamonkey) · originally made with ☕ by [Junian.dev](https://www.junian.dev).
 
 [careercup]: <https://web.archive.org/web/20240501052328/https://www.careercup.com/resume> "CareerCup Good Resume"
 [chrome]: <https://www.google.com/chrome/> "Download Google Chrome"
