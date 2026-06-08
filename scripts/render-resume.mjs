@@ -89,7 +89,7 @@ const main = async () => {
     args: ["--no-sandbox", "--font-render-hinting=none"]
   });
   try {
-    const { result } = await renderInPage(browser, opts, log);
+    const result = await renderInPage(browser, opts, log);
     console.log(JSON.stringify(result, null, opts.json ? 0 : 2));
   } finally {
     await browser.close();

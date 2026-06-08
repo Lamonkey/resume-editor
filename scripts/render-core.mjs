@@ -90,8 +90,10 @@ export const renderInPage = async (browser, opts, log = () => {}) => {
     await page.setViewport({ width: 1280, height: 1800, deviceScaleFactor: 2 });
     await page.goto(importUrl, { waitUntil: "networkidle2", timeout: 60000 });
 
-    // App reads the file, stores it, then redirects to /edit/<id>.
-    await page.waitForSelector("#vue-smart-pages-preview", { timeout: 30000 });
+    // App reads the file, stores it, then redirects to /edit/<id>. Allow a
+    // generous timeout: the first render after a cold dev server compiles the
+    // /edit route on demand, which can take well over 30s.
+    await page.waitForSelector("#vue-smart-pages-preview", { timeout: 90000 });
 
     // Wait for smart-pages pagination to settle (debounced + font loading).
     const countBreaks = () => page.$$eval(".vue-smart-page-break", (els) => els.length);
@@ -111,43 +113,37 @@ export const renderInPage = async (browser, opts, log = () => {}) => {
       await page.screenshot({ path: opts.png, fullPage: true });
       log(`[render] screenshot → ${opts.png}`);
     }
-    let pdfBuffer = null;
-    if (opts.pdf || opts.returnPdfBytes) {
-      pdfBuffer = await page.pdf({
-        path: opts.pdf || undefined,
+    if (opts.pdf) {
+      await page.pdf({
+        path: opts.pdf,
         format: opts.paper === "letter" ? "Letter" : "A4",
         printBackground: true,
         margin: { top: 0, bottom: 0, left: 0, right: 0 }
       });
-      if (opts.pdf) {
-        log(`[render] pdf → ${opts.pdf}`);
-        if (opts.label && opts.label.toLowerCase() !== "none") {
-          try {
-            setFinderTag(opts.pdf, opts.labelName, opts.label);
-            log(`[render] finder tag → "${opts.labelName}" (${opts.label})`);
-          } catch (e) {
-            log(`[render] could not set finder tag: ${e.message}`);
-          }
+      log(`[render] pdf → ${opts.pdf}`);
+      if (opts.label && opts.label.toLowerCase() !== "none") {
+        try {
+          setFinderTag(opts.pdf, opts.labelName, opts.label);
+          log(`[render] finder tag → "${opts.labelName}" (${opts.label})`);
+        } catch (e) {
+          log(`[render] could not set finder tag: ${e.message}`);
         }
       }
     }
 
     return {
-      result: {
-        pages,
-        fits: pages === 1,
-        png: opts.png ?? null,
-        pdf: opts.pdf ?? null,
-        label: opts.pdf && opts.label?.toLowerCase() !== "none"
-          ? { name: opts.labelName, color: opts.label }
-          : null,
-        styles: {
-          fontSize: opts.fontSize, lineHeight: opts.lineHeight,
-          marginV: opts.marginV, marginBottom: opts.marginBottom, marginH: opts.marginH,
-          paragraphSpace: opts.paragraphSpace, paper: opts.paper
-        }
-      },
-      pdfBuffer
+      pages,
+      fits: pages === 1,
+      png: opts.png ?? null,
+      pdf: opts.pdf ?? null,
+      label: opts.pdf && opts.label?.toLowerCase() !== "none"
+        ? { name: opts.labelName, color: opts.label }
+        : null,
+      styles: {
+        fontSize: opts.fontSize, lineHeight: opts.lineHeight,
+        marginV: opts.marginV, marginBottom: opts.marginBottom, marginH: opts.marginH,
+        paragraphSpace: opts.paragraphSpace, paper: opts.paper
+      }
     };
   } finally {
     await page.close();

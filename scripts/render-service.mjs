@@ -18,22 +18,27 @@
  *   GET  /ping     → { ok, service, port, browser }     (availability probe)
  *   POST /render   → render a resume, return JSON
  *
+ * Client and service run on the same machine (shared filesystem), so the PDF
+ * is written to disk rather than returned over the wire. By default it lands
+ * NEXT TO the source .md (same dir, same basename) — pass `savePdf:true` with
+ * `path`, or an explicit `pdfPath` for a custom location.
+ *
  * POST /render body (JSON), all fields optional except markdown|path:
  *   markdown    string   resume Markdown (written to a temp file on this Mac)
  *   path        string   …or an absolute .md path on this Mac's filesystem
  *   name        string   editor title (dedupe key — re-imports overwrite in place)
  *   fontSize, lineHeight, marginV, marginBottom, marginH, paragraphSpace, paper
- *   pdfPath     string   write the PDF here (on this Mac) and Finder-tag it
+ *   savePdf     bool     write the PDF alongside `path` (<basename>.pdf) and tag it
+ *   pdfPath     string   …or write the PDF to this explicit path instead
  *   pngPath     string   write a screenshot here (on this Mac)
  *   label, labelName      Finder tag color/name (default orange / "Resume PDF")
- *   returnPdf   bool     also return the PDF bytes as base64 in the response
  *
- * Response (JSON): { pages, fits, png, pdf, label, styles, pdfBase64? }
+ * Response (JSON): { pages, fits, png, pdf, label, styles }
  */
 import { createServer } from "node:http";
 import { writeFile, unlink, mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, parse } from "node:path";
 import puppeteer from "puppeteer-core";
 import { CHROME, DEFAULT_STYLES, ensureServer, renderInPage } from "./render-core.mjs";
 
@@ -83,6 +88,19 @@ const handleRender = async (req, res) => {
     return send(res, 400, { error: "provide `markdown` or `path`" });
   }
 
+  // Where to write the PDF (client and service share the filesystem):
+  //   explicit pdfPath  →  use it
+  //   savePdf + path    →  alongside the source .md (<dir>/<basename>.pdf)
+  //   otherwise         →  no PDF (a search render during the fit loop)
+  let pdfOut = body.pdfPath;
+  if (!pdfOut && body.savePdf) {
+    if (!body.path) {
+      return send(res, 400, { error: "`savePdf` needs `path` — nowhere to save alongside inline markdown" });
+    }
+    const { dir, name } = parse(body.path);
+    pdfOut = join(dir, `${name}.pdf`);
+  }
+
   // Inline markdown → temp file so the app's ?import= disk route can read it.
   let tmpDir, mdPath;
   if (body.markdown) {
@@ -106,10 +124,9 @@ const handleRender = async (req, res) => {
     paragraphSpace: body.paragraphSpace,
     paper: body.paper,
     png: body.pngPath,
-    pdf: body.pdfPath,
+    pdf: pdfOut,
     label: body.label,
-    labelName: body.labelName,
-    returnPdfBytes: !!body.returnPdf
+    labelName: body.labelName
   };
   // Fall back to defaults for any field the client left undefined.
   for (const k of Object.keys(DEFAULT_STYLES))
@@ -117,9 +134,8 @@ const handleRender = async (req, res) => {
 
   try {
     const b = await getBrowser();
-    const { result, pdfBuffer } = await renderInPage(b, opts, log);
-    if (body.returnPdf && pdfBuffer) result.pdfBase64 = Buffer.from(pdfBuffer).toString("base64");
-    log(`[service] rendered "${body.name || mdPath}" → ${result.pages} page(s)`);
+    const result = await renderInPage(b, opts, log);
+    log(`[service] rendered "${body.name || mdPath}" → ${result.pages} page(s)${pdfOut ? ` → ${pdfOut}` : ""}`);
     send(res, 200, result);
   } finally {
     if (tmpDir) { try { await unlink(mdPath); } catch {} }
